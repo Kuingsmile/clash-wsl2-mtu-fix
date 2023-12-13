@@ -1,0 +1,10 @@
+[Unit]
+Description=clash wsl2 mtu fix
+After=network-online.target
+
+[Service]
+ExecStart=/root/software/clash-wsl2-mtu-fix
+
+[Install]
+WantedBy=multi-user.target
+
