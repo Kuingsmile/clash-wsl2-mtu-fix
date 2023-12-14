@@ -3,51 +3,46 @@ name: Go Build and Release
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - main  # 或您选择的分支
 
 jobs:
   build:
+    name: Build and Release
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.21'
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.18'  # 您的 Go 版本
 
-      - name: Check out code
-        uses: actions/checkout@v2
+    - name: Check out code
+      uses: actions/checkout@v2
 
-      - name: Get dependencies
-        run: go get -v -t -d ./...
+    - name: Build
+      run: |
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o myapp main.go
 
-      - name: Build
-        env:
-          GOOS: linux
-          GOARCH: amd64
-        run: go build -v .
+    - name: Get short SHA
+      id: short-sha
+      run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
-      - name: Test
-        run: go test -v .
+    - name: Create Release
+      id: create-release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.SHORT_SHA }}
+        release_name: Release ${{ env.SHORT_SHA }}
+        draft: false
+        prerelease: false
 
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: clash-wsl2-mtu-fix
-          path: ./main
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: clash-wsl2-mtu-fix
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ./clash-wsl2-mtu-fix
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: ./myapp
+        asset_name: clash-wsl2-mtu-fix
+        asset_content_type: application/octet-stream
