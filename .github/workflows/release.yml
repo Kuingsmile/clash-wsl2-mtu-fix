@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v4
       with:
-        go-version: '1.18'  # 您的 Go 版本
+        go-version: '1.21'  # 您的 Go 版本
 
     - name: Check out code
       uses: actions/checkout@v2
